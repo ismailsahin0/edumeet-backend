@@ -198,24 +198,6 @@ class userController {
     static async getUserByEmail(req, res, next) {
         const db = req.app.get('db');
 
-        // User.find({email:req.params.email})
-        // .then(response =>{
-        //     logger.info(req.params.email+" user fetched from db.");
-        //     res.json({
-        //         status:"success",
-        //         message:"User is fetched from database.",
-        //         data:response
-        //     })
-        // })
-        // .catch(error => {
-        //     res.json({
-        //         status:"error",
-        //         message: error
-        //     })
-        //     logger.error(fileName, error);
-        // })
-
-
         const text = `select * from users where email = $1;`
         const values = [req.params.email];
         try {
@@ -262,6 +244,50 @@ class userController {
             res.json({
                 status: "success",
                 message: "Forgot password email successfully sent."
+            });
+        }
+        else {
+            res.json({
+                status: "error",
+                message: errorMessage
+            });
+        }
+    }
+
+    static async deleteUserById(req, res, next) {
+        const db = req.app.get('db');
+        let errorMessage = '';
+        if (req.params.id) {
+            await firebaseController.deleteUser(req.params.id)
+                .then(async (userRecord) => {
+                    //will redirect to application here
+                    logger.info(req.params.id + " user deleted from firebase.");
+                    const text = ` delete from users where id = $1;`
+                    const values = [req.params.id];
+                    try {
+                        const res = await db.query(text, values)
+                        logger.info(req.query.id + " user deleted from db.");
+                    } catch (err) {
+                        errorMessage += err;
+                        logger.error(fileName, err);
+                    }
+
+                })
+                .catch((error) => {
+                    errorMessage += error;
+                    logger.error(fileName, error);
+                });
+
+        }
+        else {
+            errorMessage += 'There is no id sent.'
+        }
+
+        if (errorMessage == '') {
+            logger.info(req.params.email + " user deleted.");
+            res.json({
+                status: "success",
+                message: "User deleted."
             });
         }
         else {
