@@ -2,6 +2,7 @@ const firebaseController = require('../api/firebaseController');
 const mailSender = require('../api/mail');
 const logger = require('../log/logger');
 const path = require("path");
+const upload = require('../helperlibs/multer');
 
 var fileName = path.basename(__filename);
 
@@ -43,31 +44,32 @@ class userController {
                             });
                         logger.error(fileName, error);
                     })
+                const text = `INSERT INTO users(id, email, name, surname, password, university, age, gender)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                    RETURNING id;`
+                const values = [users.id, users.email, users.name, users.surname, users.password, users.university, users.age, users.gender];
+                if (errorMessage === '') {
+                    try {
+                        const res = await db.query(text, values)
+                        logger.info(users.email + " user registered.");
+                    } catch (err) {
+                        errorMessage += err;
+                        await firebaseController.deleteUser(users.id)
+                            .then(() => {
+                                logger.info(users.email + " User deleted from firebase for rollback.");
+                            }).catch((err) => {
+                                logger.error(fileName, err);
+                            });
+                        logger.error(fileName, err);
+                    }
+                }
             })
             .catch((error) => {
                 errorMessage += error;
                 logger.error(fileName, error);
             })
 
-        const text = `INSERT INTO users(id, email, name, surname, password, university, age, gender)
-                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                        RETURNING id;`
-        const values = [users.id, users.email, users.name, users.surname, users.password, users.university, users.age, users.gender];
-        if (errorMessage === '') {
-            try {
-                const res = await db.query(text, values)
-                logger.info(users.email + " user registered.");
-            } catch (err) {
-                errorMessage += err;
-                await firebaseController.deleteUser(users.id)
-                    .then(() => {
-                        logger.info(users.email + " User deleted from firebase for rollback.");
-                    }).catch((err) => {
-                        logger.error(fileName, err);
-                    });
-                logger.error(fileName, err);
-            }
-        }
+
 
         if (errorMessage == '') {
             logger.info(users.email + " User successfully registered.");
@@ -84,7 +86,7 @@ class userController {
         }
     }
 
-
+    //verify
     static async verify(req, res, next) {
         const db = req.app.get('db');
         if (req.query.id) {
@@ -122,6 +124,102 @@ class userController {
             res.end("<h1>Bad Request</h1>");
         }
     }
+
+    //getuniversities
+    static async getUniversities(req, res, next) {
+        const db = req.app.get('db');
+        const text = `SELECT * FROM universities;`
+        try {
+            const result = await db.query(text)
+            logger.info("universities sended.");
+            res.json({
+                status: "success",
+                message: "Users sended.",
+                data: result.rows
+            });
+        } catch (err) {
+            logger.error(fileName, err);
+            res.json({
+                status: "error",
+                message: err
+            });
+        }
+    }
+
+    //delete user
+    static async deleteUserById(req, res, next) {
+        const db = req.app.get('db');
+        let errorMessage = '';
+        if (req.params.id) {
+            await firebaseController.deleteUser(req.params.id)
+                .then(async (userRecord) => {
+                    //will redirect to application here
+                    logger.info(req.params.id + " user deleted from firebase.");
+                    const text = ` delete from users where id = $1;`
+                    const values = [req.params.id];
+                    try {
+                        const res = await db.query(text, values)
+                        logger.info(req.query.id + " user deleted from db.");
+                    } catch (err) {
+                        errorMessage += err;
+                        logger.error(fileName, err);
+                    }
+
+                })
+                .catch((error) => {
+                    errorMessage += error;
+                    logger.error(fileName, error);
+                });
+
+        }
+        else {
+            errorMessage += 'There is no id sent.'
+        }
+
+        if (errorMessage == '') {
+            logger.info(req.params.email + " user deleted.");
+            res.json({
+                status: "success",
+                message: "User deleted."
+            });
+        }
+        else {
+            res.json({
+                status: "error",
+                message: errorMessage
+            });
+        }
+    }
+
+    //list specific user
+    static async getUserByEmail(req, res, next) {
+        const db = req.app.get('db');
+
+        const text = `select * from users where email = $1;`
+        const values = [req.params.email];
+        try {
+            const result = await db.query(text, values)
+            logger.info(req.params.email + " user fetched from db.");
+            res.json({
+                status: "success",
+                message: "User is fetched from database.",
+                data: result.rows
+            })
+        } catch (err) {
+            res.json({
+                status: "error",
+                message: err
+            })
+            logger.error(fileName, err);
+        }
+
+    }
+
+    //single image upload
+    static async uploadSingleImage(req, res, next) {
+        return res.json({ status: 'OK' });
+    }
+
 
     static async toUpdatePassword(req, res, next) {
         if (req.query.id) {
@@ -194,30 +292,6 @@ class userController {
 
     }
 
-    //list specific user
-    static async getUserByEmail(req, res, next) {
-        const db = req.app.get('db');
-
-        const text = `select * from users where email = $1;`
-        const values = [req.params.email];
-        try {
-            const result = await db.query(text, values)
-            logger.info(req.params.email + " user fetched from db.");
-            res.json({
-                status: "success",
-                message: "User is fetched from database.",
-                data: result.rows
-            })
-        } catch (err) {
-            res.json({
-                status: "error",
-                message: err
-            })
-            logger.error(fileName, err);
-        }
-
-    }
-
     static async forgotPassword(req, res, next) {
         let errorMessage = '';
         let uid = await firebaseController.getUserByEmail(req.params.email + "")
@@ -254,49 +328,7 @@ class userController {
         }
     }
 
-    static async deleteUserById(req, res, next) {
-        const db = req.app.get('db');
-        let errorMessage = '';
-        if (req.params.id) {
-            await firebaseController.deleteUser(req.params.id)
-                .then(async (userRecord) => {
-                    //will redirect to application here
-                    logger.info(req.params.id + " user deleted from firebase.");
-                    const text = ` delete from users where id = $1;`
-                    const values = [req.params.id];
-                    try {
-                        const res = await db.query(text, values)
-                        logger.info(req.query.id + " user deleted from db.");
-                    } catch (err) {
-                        errorMessage += err;
-                        logger.error(fileName, err);
-                    }
 
-                })
-                .catch((error) => {
-                    errorMessage += error;
-                    logger.error(fileName, error);
-                });
-
-        }
-        else {
-            errorMessage += 'There is no id sent.'
-        }
-
-        if (errorMessage == '') {
-            logger.info(req.params.email + " user deleted.");
-            res.json({
-                status: "success",
-                message: "User deleted."
-            });
-        }
-        else {
-            res.json({
-                status: "error",
-                message: errorMessage
-            });
-        }
-    }
 }
 
 module.exports = userController;
