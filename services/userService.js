@@ -10,6 +10,9 @@ userRouter.use('/password', userController.updatePassword);
 userRouter.use('/forgotpassword/:email', userController.forgotPassword);
 userRouter.use('/toupdatepassword', userController.toUpdatePassword);
 userRouter.use('/deleteuser/:id', userController.deleteUserById);
+userRouter.use('/', (req, res, next) => {
+    res.send("hello world!");
+});
 
 
 module.exports = userRouter;
