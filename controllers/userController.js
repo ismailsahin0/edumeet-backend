@@ -2,7 +2,7 @@ const firebaseController = require('../api/firebaseController');
 const mailSender = require('../api/mail');
 const logger = require('../log/logger');
 const path = require("path");
-const upload = require('../helperlibs/multer');
+const { deleteFile } = require('../helperlibs/fileoperations');
 
 var fileName = path.basename(__filename);
 
@@ -28,7 +28,7 @@ class userController {
                 }
                 users.id = response.userId;
                 //user verification
-                let link = "http://" + req.headers.host + "/verify?id=" + response.userId;
+                let link = "http://" + req.headers.host + "/usr/verify?id=" + response.userId;
                 let subject = "Please confirm your Email account";
                 let html = "Hello,<br> Please Click on the link to verify your email.<br><a href=" + link + ">Click here to verify</a>"
                 await mailSender(users.email, subject, html).then(() => {
@@ -214,12 +214,6 @@ class userController {
         }
 
     }
-
-    //single image upload
-    static async uploadSingleImage(req, res, next) {
-        return res.json({ status: 'OK' });
-    }
-
 
     static async toUpdatePassword(req, res, next) {
         if (req.query.id) {
