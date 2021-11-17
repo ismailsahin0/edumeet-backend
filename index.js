@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const userRouter = require('./services/userService')
 const imageRouter = require('./services/imageService')
+const matchRouter = require('./services/matchService')
 
 const dotenv = require('dotenv');
 const auth = require('./middleware/authentication')
@@ -20,6 +21,7 @@ app.set('db', client);
 
 app.use('/usr', userRouter);
 app.use('/img', imageRouter);
+app.use('/mtc', matchRouter);
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Run on port ${port}`));
