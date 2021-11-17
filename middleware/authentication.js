@@ -5,7 +5,7 @@ dotenv.config();
 
 module.exports = async (req, res, next) => {
   try {
-    if (req.path == '/verify' || req.path == '/toupdatepassword' || req.path == '/') {
+    if (req.path == '/usr/verify' || req.path == '/usr/toupdatepassword' || req.path == '/') {
       req.user = 'verify or toupdatepassword';
       return next();
     }
