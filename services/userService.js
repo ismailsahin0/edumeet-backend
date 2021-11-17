@@ -4,6 +4,7 @@ const userController = require('../controllers/userController');
 const userRouter = express.Router();
 
 userRouter.use('/register', userController.register);
+userRouter.use('/updateUser', userController.updateUser);
 userRouter.use('/verify', userController.verify);
 userRouter.use('/universities', userController.getUniversities);
 userRouter.use('/deleteuser/:id', userController.deleteUserById);

@@ -6,6 +6,7 @@ const imageRouter = express.Router();
 
 imageRouter.use('/image', upload.single('avatar'), imageController.uploadSingleImage);
 imageRouter.use('/deleteimage/:uid', imageController.deleteImagesOfUser);
+imageRouter.use('/deleteimage/:uid/:seq', imageController.deleteSpecificImageOfUser);
 
 
 module.exports = imageRouter;

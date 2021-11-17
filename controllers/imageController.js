@@ -85,8 +85,49 @@ class imageController {
         }
     }
 
+    // delete specific image of user
+    static async deleteSpecificImageOfUser(req, res, next) {
+        const uid = req.params.uid;
+        const seq = parseInt(req.params.seq);
+        const db = req.app.get('db');
+        let errorMessage = '';
+        let text = `SELECT path FROM images WHERE uid = $1 and seq = $2;`
+        let values = [uid, seq];
+
+        try {
+            const result = await db.query(text, values)
+            for (const element of result.rows) {
+                deleteFile(element.path);
+                text = `DELETE FROM images WHERE path = $1;`;
+                values = [element.path];
+                try {
+                    await db.query(text, values)
+                } catch (err) {
+                    errorMessage += err;
+                    logger.error(fileName, err);
+                }
+            }
 
 
+        } catch (err) {
+            errorMessage += err;
+            logger.error(fileName, err);
+        }
+
+        if (errorMessage == '') {
+            logger.info(uid + " users photos deleted.");
+            res.json({
+                status: "success",
+                message: "Users photos deleted."
+            });
+        }
+        else {
+            res.json({
+                status: "error",
+                message: errorMessage
+            });
+        }
+    }
 
 }
 

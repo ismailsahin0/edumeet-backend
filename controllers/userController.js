@@ -86,6 +86,45 @@ class userController {
         }
     }
 
+    //update user
+    static async updateUser(req, res, next) {
+        const db = req.app.get('db');
+
+        let users = {
+            id: req.body.id,
+            name: req.body.name,
+            surname: req.body.surname,
+            age: req.body.age,
+            gender: req.body.gender,
+            bio: req.body.bio
+        };
+
+        const text = `UPDATE users SET
+                        name = $1,
+                        surname = $2,
+                        age = $3,
+                        gender = $4,
+                        bio = $5
+                    WHERE id = $6
+                    RETURNING id;`
+        const values = [users.name, users.surname, users.age, users.gender, users.bio, users.id];
+        try {
+            const result = await db.query(text, values)
+            logger.info(users.id + " User successfully updated.");
+            res.json({
+                status: "success",
+                message: "User successfully updated."
+            });
+        } catch (err) {
+            console.log(err);
+            res.json({
+                status: "error",
+                message: err
+            });
+        }
+
+    }
+
     //verify
     static async verify(req, res, next) {
         const db = req.app.get('db');
