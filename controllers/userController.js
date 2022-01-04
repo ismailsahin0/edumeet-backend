@@ -16,10 +16,7 @@ class userController {
             email: req.body.email,
             password: req.body.password,
             name: req.body.name,
-            surname: req.body.surname,
-            university: req.body.university,
-            age: req.body.age,
-            gender: req.body.gender
+            surname: req.body.surname
         };
         await firebaseController.createUser(users.email, users.password)
             .then(async (response) => {
@@ -44,10 +41,10 @@ class userController {
                             });
                         logger.error(fileName, error);
                     })
-                const text = `INSERT INTO users(id, email, name, surname, password, university, age, gender)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                const text = `INSERT INTO users(id, email, name, surname, password)
+                    VALUES ($1, $2, $3, $4, $5)
                     RETURNING id;`
-                const values = [users.id, users.email, users.name, users.surname, users.password, users.university, users.age, users.gender];
+                const values = [users.id, users.email, users.name, users.surname, users.password];
                 if (errorMessage === '') {
                     try {
                         const res = await db.query(text, values)
