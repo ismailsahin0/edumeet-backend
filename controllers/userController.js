@@ -28,22 +28,22 @@ class userController {
                 }
                 users.id = response.userId;
                 //user verification
-                // let link = "http://" + req.headers.host + "/usr/verify?id=" + response.userId;
-                // let subject = "Please confirm your Email account";
-                // let html = "Hello,<br> Please Click on the link to verify your email.<br><a href=" + link + ">Click here to verify</a>"
-                // await mailSender(users.email, subject, html).then(() => {
-                //     logger.info(response.userId + " user register mail sent.");
-                // })
-                //     .catch(async (error) => {
-                //         errorMessage += error;
-                //         await firebaseController.deleteUser(users.id)
-                //             .then(() => {
-                //                 logger.info(users.email + " User deleted from firebase for rollback.");
-                //             }).catch((err) => {
-                //                 logger.error(fileName, error);
-                //             });
-                //         logger.error(fileName, error);
-                //     })
+                let link = "http://" + req.headers.host + "/usr/verify?id=" + response.userId;
+                let subject = "Please confirm your Email account";
+                let html = "Hello,<br> Please Click on the link to verify your email.<br><a href=" + link + ">Click here to verify</a>"
+                await mailSender(users.email, subject, html).then(() => {
+                    logger.info(response.userId + " user register mail sent.");
+                })
+                    .catch(async (error) => {
+                        errorMessage += error;
+                        await firebaseController.deleteUser(users.id)
+                            .then(() => {
+                                logger.info(users.email + " User deleted from firebase for rollback.");
+                            }).catch((err) => {
+                                logger.error(fileName, error);
+                            });
+                        logger.error(fileName, error);
+                    })
                 const text = `INSERT INTO users(id, email, name, surname, password, university, age, gender)
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                     RETURNING id;`
