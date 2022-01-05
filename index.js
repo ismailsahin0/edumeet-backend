@@ -18,6 +18,7 @@ app.use(bodyParser.json());
 app.use(cors());
 app.use(auth);
 app.set('db', client);
+app.use('/images', express.static(__dirname + '/userimages'));
 
 app.use('/usr', userRouter);
 app.use('/img', imageRouter);
