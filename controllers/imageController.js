@@ -129,6 +129,38 @@ class imageController {
         }
     }
 
+    // delete specific image of user
+    static async getImageOfUser(req, res, next) {
+        const uid = req.params.uid;
+        const db = req.app.get('db');
+        let errorMessage = '';
+        let text = `SELECT path FROM images WHERE uid = $1 ;`
+        let values = [uid];
+        let result;
+
+        try {
+            result = await db.query(text, values)
+        } catch (err) {
+            errorMessage += err;
+            logger.error(fileName, err);
+        }
+
+        if (errorMessage == '') {
+            logger.info(uid + " users photo sended.");
+            res.json({
+                status: "success",
+                message: "Users photos sended.",
+                data: result.rows[0].path
+            });
+        }
+        else {
+            res.json({
+                status: "error",
+                message: errorMessage
+            });
+        }
+    }
+
 }
 
 module.exports = imageController;
